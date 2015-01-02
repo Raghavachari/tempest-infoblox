@@ -277,28 +277,23 @@ class InfobloxScenario1(base.BaseNetworkTest):
         else:
             self.fail("EA for cmp_type is not openstack")
 
-			
-			
-# EA Test for Sub_Network
+    #Test for Sub_Network
     @test.attr(type='smoke')
     def test_EA_Is_Shared(self):
-        cidr_list = []
-		for i in self.subnet:
-			j = i['cidr']
-			cidr_list.append(j)
-		for p in nets:
-			for x in cidr_list:
-				args = "network=%s&network_view=%s&_return_fields=extattrs" % (x, self._baseconfig[0]['network_view'])
-				code, msg = self.ib.wapi_get_request("network", args)
-				if code == 200 and len(loads(msg)) > 0:
-					self.assertEqual(
-						loads(msg)[0]['extattrs']['Is Shared']
-						['value'], p['shared'])) 
-				else:
-					self.fail("EA for Network is shared %s doesnot match %s" %(self.network['shared'],
-						loads(msg)[0]['extattrs']['Is Shared']['value']))
+        args = "network=%s&network_view=%s&_return_fields=extattrs" % (
+            self.subnet['cidr'], self._baseconfig[0]['network_view'])
+        code, msg = self.ib.wapi_get_request("network", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Is Shared']
+                ['value'], str(self.network['shared']))
+        else:
+            self.fail(
+                "EA for Network is shared %s doesnot match %s" %
+                (self.network['shared'],
+                 loads(msg)[0]['extattrs']['Is Shared']['value']))
 
-    @test.attr(type='smoke')
+
     def test_EA_network_CMP_Type(self):
         args = "network=%s&network_view=%s&_return_fields=extattrs" % (
             self.subnet['cidr'], self._baseconfig[0]['network_view'])
