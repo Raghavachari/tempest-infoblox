@@ -79,33 +79,32 @@ class InfobloxScenario1(base.BaseNetworkTest):
 	resp, body = self.client.create_bulk_subnet(subnet_list)
 	self.subnet = body['subnets']
 	nets = [self.network1, self.network2]
-	from nose.tools import set_trace; set_trace()
 
         # create server
-        #server_name = data_utils.rand_name('test-server')
-        #flavor = CONF.compute.flavor_ref
-        #image_id = CONF.compute.image_ref
-        #kwargs = {'net-id': self.network2['id']},
-        #self.instance = self.ib.launch_instance(
-            #server_name,
-            #image_id,
-            #flavor,
-            #kwargs)
-        #self.host_name = self.ib.get_host_from_hostname_pattern(
-            #self.instance,
-            #self.network2,
-            #self.subnet[1])
-    #@test.attr(type='smoke')
-    #def test_Host_record_added_to_NIOS(self):
-        #args = "name=%s" % (self.host_name)
-	#code, msg = self.ib.wapi_get_request("record:host", args)
-        #if code == 200 and len(loads(msg)) > 0:
-            #self.assertEqual(loads(msg)[0]['name'], self.host_name)
-        #else:
-            #self.fail("Host %s is not added to NIOS" % self.host_name)
+        server_name = data_utils.rand_name('test-server')
+        flavor = CONF.compute.flavor_ref
+        image_id = CONF.compute.image_ref
+        kwargs = {'net-id': self.network2['id']},
+        self.instance = self.ib.launch_instance(
+            server_name,
+            image_id,
+            flavor,
+            kwargs)
+        self.host_name = self.ib.get_host_from_hostname_pattern(
+            self.instance,
+            self.network2,
+            self.subnet[1])
+    @test.attr(type='smoke')
+    def test_Host_record_added_to_NIOS_multiple_network(self):
+        args = "name=%s" % (self.host_name)
+	code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(loads(msg)[0]['name'], self.host_name)
+        else:
+            self.fail("Host %s is not added to NIOS" % self.host_name)
 
     @test.attr(type='smoke')
-    def test_Networks_added_to_NIOS(self):
+    def test_Multiple_networks_added_to_NIOS(self):
 	cidr_list = []
 	for x in self.subnet:
 	    y = x['cidr']
@@ -117,15 +116,17 @@ class InfobloxScenario1(base.BaseNetworkTest):
                 self.assertEqual(loads(msg)[0]['network'], p)
             else:
                 self.fail("Network %s is not added to NIOS" % p)
-    #@test.attr(type='smoke')
-    #def test_DHCP_Lease_from_NIOS_for_instance(self):
-        #match_obj_for_lease_msg = self.ib.search_console_log(self.instance)
-        #self.assertNotEqual(match_obj_for_lease_msg, None)
+       
+	from nose.tools import set_trace; set_trace()
+    @test.attr(type='smoke')
+    def test_DHCP_Lease_from_NIOS_for_instance(self):
+        match_obj_for_lease_msg = self.ib.search_console_log(self.instance)
+        self.assertNotEqual(match_obj_for_lease_msg, None)
 
 
     @classmethod
     def tearDownClass(self):
-        #self.ib.terminate_instance(self.instance)
+        self.ib.terminate_instance(self.instance)
 	# delete user
         #self.isolated_creds.clear_isolated_creds()
         # delete project
