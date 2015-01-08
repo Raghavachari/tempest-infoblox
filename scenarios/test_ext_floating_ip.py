@@ -195,13 +195,32 @@ class Floating_External_Scenario8(base.BaseNetworkTest):
     def check_ext_snet_zone_exist_after_deleting_ext_nw(self):
         fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
             self.network,
-            self.ext_subnet)
+            self.ext_subnet,external=True)
         args = "fqdn=%s" % (fqdn)
         code, msg = self.ib.wapi_get_request("zone_auth", args)
         if code == 200 and len(loads(msg)) > 0:
             self.assertEqual(loads(msg)[0]['fqdn'], fqdn)
         else:
             self.fail("Zone %s is not added to NIOS" % fqdn)
+
+    def check_ext_Network_exist_in_NIOS_after_deleting(self):
+        from nose.tools import set_trace; set_trace()
+        args = "network=%s" % (self.ext_subnet['cidr'])
+        code, msg = self.ib.wapi_get_request("network", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(loads(msg)[0]['network'], self.ext_subnet['cidr'])
+        else:
+            self.fail("Network %s is not added to NIOS" % self.ext_subnet['cidr']) 
+
+    def delete_external_network_NIOS_side(self):
+        args = "network=%s" % (self.ext_subnet['cidr'])
+        code, msg = self.ib.wapi_get_request("network", args)
+        if code == 200 and len(loads(msg)) > 0:
+            del_object = loads(msg)[0]['_ref'].split(':')[0]
+            code, msg1 = self.ib.wapi_get_request(del_object,'_method=DELETE')
+#        else:
+ #           self.fail("External Network %s deletion to NIOS, Error : %s " % (self.ext_subnet['cidr'], loads(msg1))
+
 
 #Test cases starts here
 
@@ -498,7 +517,9 @@ class Floating_External_Scenario8(base.BaseNetworkTest):
         self.disallocate_floating_ip()
         self.delete_external_network()
         self.check_ext_snet_zone_exist_after_deleting_ext_nw()
-
+        self.check_ext_Network_exist_in_NIOS_after_deleting()
+        self.delete_external_network_NIOS_side()
+        #self.delete_external_network_dns_Zone()
 
     @classmethod
     def tearDownClass(self):
