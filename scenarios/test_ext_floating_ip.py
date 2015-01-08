@@ -24,21 +24,34 @@ Neutron_user_id = ibbase.get_neutron_user_id()
 Segment_range = ibbase.segmentation_range()
 
 
-class InfobloxScenario1(base.BaseNetworkTest):
+class Floating_External_Scenario8(base.BaseNetworkTest):
 
-    _baseconfig = [{
-        "domain_suffix_pattern": "{subnet_name}.cloud.global.com",
-        "network_view": "tempest",
-        "is_external": False,
-        "require_dhcp_relay": True,
-        "hostname_pattern": "host-{ip_address}",
-        "condition": "tenant",
-        "dhcp_members": "<next-available-member>"
-    }]
+    _baseconfig = [
+        {
+            "require_dhcp_relay": True,
+            "network_view": "tempest",
+            "domain_suffix_pattern": "{tenant_id}.cloud.global.com",
+            "hostname_pattern": "host-{network_name}-{subnet_name}",
+            "dhcp_members": "<next-available-member>",
+            "condition": "tenant",
+            "is_external": False
+        },
+        {
+            "require_dhcp_relay": True,
+            "network_view": "tempest",
+            "domain_suffix_pattern": "{subnet_name}.cloud.ext.com",
+            "hostname_pattern": "host-{network_name}-{subnet_name}",
+            "dhcp_members": "<next-available-member>",
+            "condition": "tenant",
+            "is_external": True
+        }
+    ]
 
     _arecord = 0
 
-    _external = False
+    _external = True
+
+    _interface = "json"
 
     @classmethod
     #@test.safe_setup
@@ -51,7 +64,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
         ibbase.service_restart()
         time.sleep(30)
 
-        super(InfobloxScenario1, self).setUpClass()
+        super(Floating_External_Scenario8, self).setUpClass()
 
         self.ib = ibbase.InfobloxNIOStest(
             self.isolated_creds.get_credentials('primary'))
@@ -111,7 +124,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
                 ip_version=4
             )
             self.ext_subnet = body['subnet']
-            # create router with gateway
+    # create router with gateway
             ext_gw_info = {}
             router_name = data_utils.rand_name('test-router')
             ext_gw_info['network_id'] = self.Ext_network['id']
@@ -127,7 +140,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
             self.floating_ip = body['floatingip']
             ibbase.logger.info("floating obj '%s'", self.floating_ip)
 
-        # create server
+    # create server
         server_name = data_utils.rand_name('test-server')
         flavor = CONF.compute.flavor_ref
         image_id = CONF.compute.image_ref
@@ -153,7 +166,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
             self.ib.associate_floating_ip_to_server(
                 self.floating_ip['id'],
                 instance_port_id)
-            # Associate floating ip to server
+    # Associate floating ip to server
             group = self.ib.nova_client.security_groups.find(name="default")
             self.ib.nova_client.security_group_rules.create(
                 group.id,
@@ -163,6 +176,34 @@ class InfobloxScenario1(base.BaseNetworkTest):
                 to_port=-
                 1)
             time.sleep(10)
+    def delete_external_network(self):
+         self.admin_client.delete_subnet(self.ext_subnet['id'])
+         self.admin_client.delete_network(self.Ext_network['id'])
+
+    def disallocate_floating_ip(self):
+         if self._external:
+            # Disassociate floating ip to server
+            self.ib.disassociate_floating_ip_from_server(
+                self.floating_ip['id'])
+            # Release floating Ip
+            self.client.delete_floatingip(self.floating_ip['id'])
+            # Delete router with interface
+            self.delete_router(self.router)
+        # delete instance
+         self.ib.terminate_instance(self.instance)
+
+    def check_ext_snet_zone_exist_after_deleting_ext_nw(self):
+        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
+            self.network,
+            self.ext_subnet)
+        args = "fqdn=%s" % (fqdn)
+        code, msg = self.ib.wapi_get_request("zone_auth", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(loads(msg)[0]['fqdn'], fqdn)
+        else:
+            self.fail("Zone %s is not added to NIOS" % fqdn)
+
+#Test cases starts here
 
     @test.attr(type='smoke')
     def test_Zone_added_to_NIOS(self):
@@ -277,7 +318,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
         else:
             self.fail("EA for cmp_type is not openstack")
 
-    #Test for Sub_Network
+    #Test EA for Sub_Network
     @test.attr(type='smoke')
     def test_EA_Is_Shared(self):
         args = "network=%s&network_view=%s&_return_fields=extattrs" % (
@@ -293,7 +334,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
                 (self.network['shared'],
                  loads(msg)[0]['extattrs']['Is Shared']['value']))
 
-
+    @test.attr(type='smoke')
     def test_EA_network_CMP_Type(self):
         args = "network=%s&network_view=%s&_return_fields=extattrs" % (
             self.subnet['cidr'], self._baseconfig[0]['network_view'])
@@ -313,7 +354,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
         self.assertTrue(int(loads(msg)[0]['extattrs']['Segmentation ID'][
                         'value']) in Segment_range,
                         "EA segmentation_id not updated")
-						
+                        
     @test.attr(type='smoke')
     def test_EA_Network_Network_Name(self):
         args = "network=%s&network_view=%s&_return_fields=extattrs" % (
@@ -398,99 +439,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
                 "EA for Network user ID %s does not match with NIOS " %
                 self.isolated_creds.get_credentials('primary').user_id)
 
-    @classmethod
-    def tearDownClass(self):
-
-        # Remove subnet
-        self.client.delete_subnet(self.subnet['id'])
-        # Delete Network
-        self.client.delete_network(self.network['id'])
-        # delete user
-        self.isolated_creds.clear_isolated_creds()
-        # delete project
-        super(InfobloxScenario1, self).tearDownClass()
-        # revert neutron config
-        if(self._arecord):
-            ibbase.a_record_setup()
-
-
-class InfobloxScenario8(InfobloxScenario1):
-
-    _baseconfig = [
-        {
-            "require_dhcp_relay": True,
-            "network_view": "tempest",
-            "domain_suffix_pattern": "{tenant_id}.cloud.global.com",
-            "hostname_pattern": "host-{network_name}-{subnet_name}",
-            "dhcp_members": "<next-available-member>",
-            "condition": "tenant",
-            "is_external": False
-        },
-        {
-            "require_dhcp_relay": True,
-            "network_view": "tempest",
-            "domain_suffix_pattern": "{subnet_name}.cloud.ext.com",
-            "hostname_pattern": "host-{network_name}-{subnet_name}",
-            "dhcp_members": "<next-available-member>",
-            "condition": "tenant",
-            "is_external": True
-        }
-    ]
-
-    _external = True
-
-    _interface = "json"
-
-    def disallocate_floating_ip(self):
-         if self._external:
-            # Disassociate floating ip to server
-            self.ib.disassociate_floating_ip_from_server(
-                self.floating_ip['id'])
-            # Release floating Ip
-            self.client.delete_floatingip(self.floating_ip['id'])
-            # Delete router with interface
-            self.delete_router(self.router)
-        # delete instance
-         self.ib.terminate_instance(self.instance)
- 
-
-    def delete_external_network(self):
-         self.admin_client.delete_subnet(self.ext_subnet['id'])
-         self.admin_client.delete_network(self.Ext_network['id'])
-
-    def check_ext_snet_zone_exist_after_deleting_ext_nw(self):
-        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
-            self.network,
-            self.ext_subnet)
-        args = "fqdn=%s" % (fqdn)
-        code, msg = self.ib.wapi_get_request("zone_auth", args)
-        if code == 200 and len(loads(msg)) > 0:
-            self.assertEqual(loads(msg)[0]['fqdn'], fqdn)
-        else:
-            self.fail("Zone %s is not added to NIOS" % fqdn)
-        
-
-    @test.attr(type='smoke')
-    def test_Ping_floating_ip(self):
-        ret = self.ib.ping_ip_address(self.floating_ip['floating_ip_address'])
-        self.assertEqual(ret, True)
-
-    @test.attr(type='smoke')
-    def test_External_gateway_name(self):
-        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
-            self.Ext_network,
-            self.ext_subnet,
-            external=True)
-        external_port = "router-gw-" + \
-            self.router_gateway.replace(".", "-") + "." + fqdn
-        args = "name=%s" % (external_port)
-        code, msg = self.ib.wapi_get_request("record:host", args)
-        if code == 200 and len(loads(msg)) > 0:
-            self.assertEqual(loads(msg)[0]['name'], external_port)
-        else:
-            self.fail("NS_group %s is not used in NIOS" % external_port)
-
-# EA Test which is applicable only for external netwrok
+    # EA and other test case which is applicable only for external netwrok
 
     @test.attr(type='smoke')
     def test_EA_Is_External(self):
@@ -523,9 +472,45 @@ class InfobloxScenario8(InfobloxScenario1):
                 "EA for Network type is %s doesnot match" %
                 self.Ext_network['provider:network_type'])
 
-   
+
+    @test.attr(type='smoke')
+    def test_Ping_floating_ip(self):
+        ret = self.ib.ping_ip_address(self.floating_ip['floating_ip_address'])
+        self.assertEqual(ret, True)
+
+    @test.attr(type='smoke')
+    def test_External_gateway_name(self):
+        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
+            self.Ext_network,
+            self.ext_subnet,
+            external=True)
+        external_port = "router-gw-" + \
+            self.router_gateway.replace(".", "-") + "." + fqdn
+        args = "name=%s" % (external_port)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(loads(msg)[0]['name'], external_port)
+        else:
+            self.fail("NS_group %s is not used in NIOS" % external_port)
+
     @test.attr(type='smoke')
     def test_del_external_nw_zone_should_exist(self):
         self.disallocate_floating_ip()
         self.delete_external_network()
         self.check_ext_snet_zone_exist_after_deleting_ext_nw()
+
+
+    @classmethod
+    def tearDownClass(self):
+
+        # Remove subnet
+        self.client.delete_subnet(self.subnet['id'])
+        # Delete Network
+        self.client.delete_network(self.network['id'])
+        # delete user
+        self.isolated_creds.clear_isolated_creds()
+        # delete project
+        super(Floating_External_Scenario8, self).tearDownClass()
+        # revert neutron config
+        if(self._arecord):
+            ibbase.a_record_setup()
