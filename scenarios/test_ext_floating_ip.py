@@ -204,7 +204,6 @@ class Floating_External_Scenario8(base.BaseNetworkTest):
             self.fail("Zone %s is not added to NIOS" % fqdn)
 
     def check_ext_Network_exist_in_NIOS_after_deleting(self):
-        from nose.tools import set_trace; set_trace()
         args = "network=%s" % (self.ext_subnet['cidr'])
         code, msg = self.ib.wapi_get_request("network", args)
         if code == 200 and len(loads(msg)) > 0:

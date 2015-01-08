@@ -117,7 +117,6 @@ class InfobloxScenario1(base.BaseNetworkTest):
             else:
                 self.fail("Network %s is not added to NIOS" % p)
        
-	from nose.tools import set_trace; set_trace()
     @test.attr(type='smoke')
     def test_DHCP_Lease_from_NIOS_for_instance(self):
         match_obj_for_lease_msg = self.ib.search_console_log(self.instance)
