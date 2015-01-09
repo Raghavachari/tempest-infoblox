@@ -87,7 +87,7 @@ class MultSubnet_Create_Del_subnet_name_pattern(base.BaseNetworkTest):
          for i in self.subnet:
              self.fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(self.network,i)
              self.client.delete_subnet(i['id'])
-             args = "fqdn=%s" % (self.fqdn)
+             args =  "fqdn=%s&view=default.%s" % (self.fqdn, self._baseconfig[0]['network_view']) 
              code, msg = self.ib.wapi_get_request("zone_auth", args)
              if code == 200 and len(loads(msg)) == 0:
                  self.assertEqual(1,1)
@@ -167,7 +167,7 @@ class MultSubnet_Create_Del_network_name_pattern(base.BaseNetworkTest):
     def del_snet1_zone_should_exist(self,deleted_subnet):
             fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
             self.network, deleted_subnet)
-            args = "fqdn=%s" % (fqdn)
+            args =  "fqdn=%s&view=default.%s" % (self.fqdn, self._baseconfig[0]['network_view']) 
             code, msg = self.ib.wapi_get_request("zone_auth", args)
             if code == 200 and len(loads(msg)) > 0:
                 self.assertEqual(loads(msg)[0]['fqdn'], fqdn)
@@ -177,7 +177,7 @@ class MultSubnet_Create_Del_network_name_pattern(base.BaseNetworkTest):
     def del_snet2_zone_should_delete(self,deleted_subnet):
             fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
             self.network, deleted_subnet)
-            args = "fqdn=%s" % (fqdn)
+            args =  "fqdn=%s&view=default.%s" % (self.fqdn, self._baseconfig[0]['network_view']) 
             code, msg = self.ib.wapi_get_request("zone_auth", args)
             code, msg = self.ib.wapi_get_request("zone_auth", args)
             if code == 200 and len(loads(msg)) == 0:
