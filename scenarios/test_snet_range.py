@@ -59,7 +59,6 @@ class Condition_subnet_range(base.BaseNetworkTest):
         if(self._arecord):
             ibbase.a_record_setup(self._arecord)
         
-        from nose.tools import set_trace; set_trace()
         ibbase.set_configopt(self._baseconfig)
         ibbase.service_restart()
         time.sleep(30)
@@ -359,15 +358,18 @@ class Condition_subnet_range(base.BaseNetworkTest):
     @classmethod
     def tearDownClass(self):
 
-        # Remove subnet
+        from nose.tools import set_trace; set_trace()
+# delete instance
+        self.ib.terminate_instance(self.instance)
+# Remove subnet
         self.client.delete_subnet(self.subnet['id'])
-        # Delete Network
+# Delete Network
         self.client.delete_network(self.network['id'])
-        # delete user
+# delete user
         self.isolated_creds.clear_isolated_creds()
-        # delete project
+
         super(Condition_subnet_range, self).tearDownClass()
-        # revert neutron config
+# revert neutron config
         if(self._arecord):
             ibbase.a_record_setup()
 
