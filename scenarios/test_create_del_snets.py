@@ -102,7 +102,7 @@ class MultSubnet_Create_Del_subnet_name_pattern(base.BaseNetworkTest):
         self.client.delete_network(self.network['id'])
         super(MultSubnet_Create_Del_subnet_name_pattern, self).tearDownClass()
 
-class Create_multiple_snet_condition_global(InfobloxScenario1):
+class Create_multiple_snet_condition_global(MultSubnet_Create_Del_subnet_name_pattern):
 
     _baseconfig = [{
         "domain_suffix_pattern": "{subnet_id}.cloud.global.com",
@@ -125,24 +125,38 @@ class Create_multiple_snet_condition_global(InfobloxScenario1):
             args =  "fqdn=%s&view=default.%s" % (self.fqdn, self._baseconfig[0]['network_view']) 
             code, msg = self.ib.wapi_get_request("zone_auth", args)
             if code == 200 and len(loads(msg)) > 0:
-                self.assertEqual(loads(msg)[0]['fqdn'], fqdn)
+                self.assertEqual(loads(msg)[0]['fqdn'], self.fqdn)
             else:
-                self.fail("Zone %s deleted from NIOS in condition global" % fqdn)
+                self.fail("Zone %s deleted from NIOS in condition global" % self.fqdn)
     
     def check_network_exist_in_NIOS(self):
         for subnet_i in self.subnet:
-            args = "network=%s" % (self.subnet_i['cidr'])
+            args = "network=%s" % (subnet_i['cidr'])
             code, msg = self.ib.wapi_get_request("network", args)
             if code == 200 and len(loads(msg)) > 0:
-                self.assertEqual(loads(msg)[0]['network'], self.subnet_i['cidr'])
+                self.assertEqual(loads(msg)[0]['network'], subnet_i['cidr'])
             else:
-                self.fail("Network %s got deleted from NIOS" % self.subnet_i['cidr'])
+                self.fail("Network %s got deleted from NIOS" % subnet_i['cidr'])
+
+    def delete_network_NIOS_side_to_execute_next_case(self):
+        for subnet_i in self.subnet:
+            args = "network=%s" % (subnet_i['cidr'])
+            code, msg = self.ib.wapi_get_request("network", args)
+            if code == 200 and len(loads(msg)) > 0:
+                del_object = loads(msg)[0]['_ref'].split(':')[0]
+                code, msg1 = self.ib.wapi_get_request(del_object,'_method=DELETE')
+
+    @test.skip_because(bug="1236220")
+    def test_del_both_snet_zone_should_delete(self):
+        pass
 
     @test.attr(type='smoke')
     def test_del_both_snet_zone_should_exist(self):
              self.delete_snet()
-             self.check_subnet_exist_in_NIOS(self)
-             self.check_network_exist_in_NIOS(self)
+             self.check_subnet_ZONE_exist_in_NIOS()
+             self.check_network_exist_in_NIOS()
+             from nose.tools import set_trace; set_trace()
+             self.delete_network_NIOS_side_to_execute_next_case()
              
 
 class MultSubnet_Create_Del_network_name_pattern(base.BaseNetworkTest):
