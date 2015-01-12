@@ -211,6 +211,17 @@ class InfobloxScenario1(base.BaseNetworkTest):
         self.assertNotEqual(match_obj_for_lease_msg, None)
 
 # EA Test For Instance Object
+    @test.attr(type='smoke')
+    def test_Network_ECMP_type(self):
+        args = "network=%s&network_view=%s&_return_fields=extattrs" % (
+            self.subnet['cidr'], self._baseconfig[0]['network_view'])
+        code, msg = self.ib.wapi_get_request("network", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Network Encap']['value'],
+                ibbase.parser.get("ml2", "tenant_network_types"))
+        else:
+            self.fail("EA for Network Encap doesnot match")
 
     @test.attr(type='smoke')
     def test_EA_VM_ID(self):
