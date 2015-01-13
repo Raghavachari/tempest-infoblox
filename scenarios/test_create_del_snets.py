@@ -155,7 +155,6 @@ class Create_multiple_snet_condition_global(MultSubnet_Create_Del_subnet_name_pa
              self.delete_snet()
              self.check_subnet_ZONE_exist_in_NIOS()
              self.check_network_exist_in_NIOS()
-             from nose.tools import set_trace; set_trace()
              self.delete_network_NIOS_side_to_execute_next_case()
              
 
