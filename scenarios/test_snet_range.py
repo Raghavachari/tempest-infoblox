@@ -358,7 +358,6 @@ class Condition_subnet_range(base.BaseNetworkTest):
     @classmethod
     def tearDownClass(self):
 
-        from nose.tools import set_trace; set_trace()
 # delete instance
         self.ib.terminate_instance(self.instance)
 # Remove subnet
