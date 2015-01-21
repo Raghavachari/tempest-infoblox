@@ -212,7 +212,7 @@ class Floating_External_Scenario8(base.BaseNetworkTest):
             self.fail("Network %s is not added to NIOS" % self.ext_subnet['cidr']) 
 
     def delete_external_network_NIOS_side(self):
-        args = "network=%s" % (self.ext_subnet['cidr'])
+        args = "network=%s&network_view=%s" % (self.ext_subnet['cidr'],self._baseconfig[0]['network_view'])
         code, msg = self.ib.wapi_get_request("network", args)
         if code == 200 and len(loads(msg)) > 0:
             del_object = loads(msg)[0]['_ref'].split(':')[0]
