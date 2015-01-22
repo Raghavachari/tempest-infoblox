@@ -465,29 +465,29 @@ class InfobloxScenario3(InfobloxScenario1):
     }]
 
 
-class InfobloxScenario4(InfobloxScenario1):
+# class InfobloxScenario4(InfobloxScenario1):
 
-    _baseconfig = [{
-        "domain_suffix_pattern": "{network_id}.cloud.com",
-        "network_view": "tempest",
-        "dns_view": "asmtech",
-        "is_external": False,
-        "require_dhcp_relay": True,
-        "hostname_pattern": "host-{ip_address_octet1}-{ip_address_octet4}-\
-{ip_address_octet3}-{ip_address_octet2}",
-        "condition": "tenant",
-        "dhcp_members": "<next-available-member>"
-    }]
+#     _baseconfig = [{
+#         "domain_suffix_pattern": "{network_id}.cloud.com",
+#         "network_view": "tempest",
+#         "dns_view": "asmtech",
+#         "is_external": False,
+#         "require_dhcp_relay": True,
+#         "hostname_pattern": "host-{ip_address_octet1}-{ip_address_octet4}-\
+# {ip_address_octet3}-{ip_address_octet2}",
+#         "condition": "tenant",
+#         "dhcp_members": "<next-available-member>"
+#     }]
 
-    @test.attr(type='smoke')
-    def test_DNS_view_added_to_NIOS(self):
-        dns_view = self.ib.get_dns_view_name()
-        args = "name=%s" % (dns_view)
-        code, msg = self.ib.wapi_get_request("view", args)
-        if code == 200 and len(loads(msg)) > 0:
-            self.assertEqual(loads(msg)[0]['name'], dns_view)
-        else:
-            self.fail("DNS View %s is not added to NIOS" % dns_view)
+#     @test.attr(type='smoke')
+#     def test_DNS_view_added_to_NIOS(self):
+#         dns_view = self.ib.get_dns_view_name()
+#         args = "name=%s" % (dns_view)
+#         code, msg = self.ib.wapi_get_request("view", args)
+#         if code == 200 and len(loads(msg)) > 0:
+#             self.assertEqual(loads(msg)[0]['name'], dns_view)
+#         else:
+#             self.fail("DNS View %s is not added to NIOS" % dns_view)
 
 
 class InfobloxScenario5(InfobloxScenario1):
