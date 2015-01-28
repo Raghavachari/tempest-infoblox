@@ -712,7 +712,7 @@ class InfobloxScenario9(InfobloxScenario1):
         {
             "require_dhcp_relay": True, 
             "is_external": False, 
-            "network_view": "test106", 
+            "network_view": "tempest", 
             "domain_suffix_pattern": "{tenant_id}.cloud.global.com", 
             "hostname_pattern": "host-{ip_address}", 
             "condition": "tenant", 
@@ -745,7 +745,7 @@ class InfobloxScenario10(InfobloxScenario1):
         {
             "require_dhcp_relay": True,
             "is_external": False,
-            "network_view": "test106",
+            "network_view": "tempest",
             "domain_suffix_pattern": "{tenant_id}.cloud.global.com",
             "hostname_pattern": "host-{ip_address}",
             "condition": "tenant",
@@ -791,7 +791,7 @@ class InfobloxScenario11(InfobloxScenario1):
         {
             "require_dhcp_relay": True,
             "is_external": False,
-            "network_view": "test106",
+            "network_view": "tempest",
             "domain_suffix_pattern": "{tenant_id}.cloud.global.com",
             "hostname_pattern": "host-{ip_address}",
             "condition": "tenant",
