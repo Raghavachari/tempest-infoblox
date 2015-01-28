@@ -25,7 +25,7 @@ fi
 cp $Tempest_Master/infoblox_tempest.conf $Tempest_dir/etc/tempest.conf
 
 source ~/.openrc
-IP=`ifconfig eth0 | sed -n 2p |cut -d ':' -f2|awk '{print $1}'`
+IP=`ifconfig br-fixed | sed -n 2p |cut -d ':' -f2|awk '{print $1}'`
 image_ref=`glance image-list 2> /dev/null  |grep cirros | awk '{print $2}'`
 echo $image_ref
 Tempest_Conf=/root/tempest/etc/tempest.conf
