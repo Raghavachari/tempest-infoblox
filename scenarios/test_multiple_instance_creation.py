@@ -92,7 +92,12 @@ class MultipleInstanceCreation(base.BaseNetworkTest):
                 self.assertEqual(loads(msg)[0]['name'], i)
             else:
                 self.fail("Host %s is not added to NIOS" % self.hosts[i])
-
+                
+    @test.attr(type='smoke')
+    def test_DHCP_Lease_from_NIOS_for_first_4_instances(self):
+        for i in self.vms:
+            match_obj_for_lease_msg = self.ib.search_console_log(i)
+            self.assertNotEqual(match_obj_for_lease_msg, None)
 
     @classmethod
     def tearDownClass(self):
