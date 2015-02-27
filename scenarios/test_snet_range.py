@@ -29,7 +29,7 @@ class Condition_subnet_range(base.BaseNetworkTest):
     _baseconfig = [
         {
             "require_dhcp_relay": True,
-            "network_view": "naggappan_tempest",
+            "network_view": "tempest",
             "domain_suffix_pattern": "{tenant_id}.cloud.global.com",
             "hostname_pattern": "host-{network_name}-{subnet_name}",
             "condition" : "subnet_range:25.0.0.0/24",
