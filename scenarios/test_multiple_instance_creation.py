@@ -84,7 +84,7 @@ class MultipleInstanceCreation(base.BaseNetworkTest):
             self.hosts.append(self.host_name)
 
     @test.attr(type='smoke')
-    def test_instance_created(self):
+    def test_host_records_created_for_all_instances(self):
         for i in self.hosts:
             args = "name=%s" % (i)
             code, msg = self.ib.wapi_get_request("record:host", args)
@@ -94,7 +94,7 @@ class MultipleInstanceCreation(base.BaseNetworkTest):
                 self.fail("Host %s is not added to NIOS" % self.hosts[i])
                 
     @test.attr(type='smoke')
-    def test_DHCP_Lease_from_NIOS_for_first_4_instances(self):
+    def test_DHCP_Lease_from_NIOS_for_all_instances(self):
         for i in self.vms:
             match_obj_for_lease_msg = self.ib.search_console_log(i)
             self.assertNotEqual(match_obj_for_lease_msg, None)
