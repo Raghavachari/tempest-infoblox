@@ -55,7 +55,8 @@ class InfobloxScenario1(base.BaseNetworkTest):
 
         self.ib = ibbase.InfobloxNIOStest(
             self.isolated_creds.get_credentials('primary'))
-
+        
+	self.network_type = ibbase.parser.get("ml2", "tenant_network_types")
         # create network
         network_name = data_utils.rand_name('test-network')
         resp, body = self.client.create_network(name=network_name)
@@ -219,7 +220,7 @@ class InfobloxScenario1(base.BaseNetworkTest):
         if code == 200 and len(loads(msg)) > 0:
             self.assertEqual(
                 loads(msg)[0]['extattrs']['Network Encap']['value'],
-                ibbase.parser.get("ml2", "tenant_network_types"))
+                self.network_type.upper())
         else:
             self.fail("EA for Network Encap doesnot match")
 
