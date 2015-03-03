@@ -236,6 +236,31 @@ class InfobloxScenario1(base.BaseNetworkTest):
             self.fail(
                 "EA for instance ID %s does not match with NIOS" %
                 self.instance.id)
+       
+    @test.attr(type='smoke')
+    def test_EA_VM_NAME(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['VM Name']['value'],
+                self.instance.name)
+        else:
+            self.fail(
+                "EA for instance ID %s does not match with NIOS" %
+                self.instance.name)
+
+    @test.attr(type='smoke')
+    def test_EA_IP_Type(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['IP Type']['value'],
+                "Fixed")
+        else:
+            self.fail(
+                "EA IP Type for %s does not match " % self.instance.id)
 
     @test.attr(type='smoke')
     def test_EA_Tenant_ID(self):
