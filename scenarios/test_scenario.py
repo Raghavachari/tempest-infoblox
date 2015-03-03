@@ -304,6 +304,21 @@ class InfobloxScenario1(base.BaseNetworkTest):
                     device_owner="compute:None")[1]['ports'][0]['id'])
 
     @test.attr(type='smoke')
+    def test_EA_Port_Attached_Device_ID_for_instance(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Port Attached Device - Device ID']['value'],
+                self.client.list_ports(
+                    ubnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+        else:
+            self.fail(
+                "EA for Port Attached Device - Device ID % does not match with NIOS" %
+                self.client.list_ports(
+                    ubnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+
+    @test.attr(type='smoke')
     def test_EA_CMP_Type(self):
         args = "name=%s&_return_fields=extattrs" % (self.host_name)
         code, msg = self.ib.wapi_get_request("record:host", args)
