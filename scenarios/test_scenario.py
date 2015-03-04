@@ -649,6 +649,45 @@ class InfobloxScenario6(InfobloxScenario1):
         else:
             self.fail("EA for cmp_type is not openstack")
 
+    @test.attr(type='smoke')
+    def test_EA_VM_NAME(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:a", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['VM Name']['value'],
+                self.instance.name)
+        else:
+            self.fail(
+                "EA for instance ID %s does not match with NIOS" %
+                self.instance.name)
+
+    @test.attr(type='smoke')
+    def test_EA_IP_Type(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:a", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['IP Type']['value'],
+                "Fixed")
+        else:
+            self.fail(
+                "EA IP Type for %s does not match " % self.instance.id)
+
+    def test_EA_Port_Attached_Device_ID_for_instance(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:a", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Port Attached Device - Device ID']['value'],
+                self.client.list_ports(
+                    subnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+        else:
+            self.fail(
+                "EA for Port Attached Device - Device ID % does not match with NIOS" %
+                self.client.list_ports(
+                    subnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+
 # EA - PTR RECORD
 
     @test.attr(type='smoke')
@@ -715,7 +754,44 @@ class InfobloxScenario6(InfobloxScenario1):
                 'openstack')
         else:
             self.fail("EA for cmp_type is not openstack")
+            
+    def test_EA_VM_NAME_PTR(self):
+        args = "ptrdname=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:ptr", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['VM Name']['value'],
+                self.instance.name)
+        else:
+            self.fail(
+                "EA for instance ID %s does not match with NIOS" %
+                self.instance.name)
 
+    @test.attr(type='smoke')
+    def test_EA_IP_Type_PTR(self):
+        args = "ptrdname=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:ptr", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['IP Type']['value'],
+                "Fixed")
+        else:
+            self.fail(
+                "EA IP Type for %s does not match " % self.instance.id)
+
+    def test_EA_Port_Attached_Device_ID_for_instance_PTR(self):
+        args = "ptrdname=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:ptr", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Port Attached Device - Device ID']['value'],
+                self.client.list_ports(
+                    subnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+        else:
+            self.fail(
+                "EA for Port Attached Device - Device ID % does not match with NIOS" %
+                self.client.list_ports(
+                    subnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
 
 class InfobloxScenario7(InfobloxScenario1):
 
