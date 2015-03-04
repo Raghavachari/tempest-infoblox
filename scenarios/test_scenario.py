@@ -311,12 +311,12 @@ class InfobloxScenario1(base.BaseNetworkTest):
             self.assertEqual(
                 loads(msg)[0]['extattrs']['Port Attached Device - Device ID']['value'],
                 self.client.list_ports(
-                    ubnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+                    subnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
         else:
             self.fail(
                 "EA for Port Attached Device - Device ID % does not match with NIOS" %
                 self.client.list_ports(
-                    ubnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+                    subnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
 
     @test.attr(type='smoke')
     def test_EA_CMP_Type(self):
