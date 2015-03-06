@@ -65,7 +65,7 @@ class Floating_External_Scenario10(base.BaseNetworkTest):
         ibbase.service_restart()
         time.sleep(30)
 
-        super(Floating_External_Scenario8, self).setUpClass()
+        super(Floating_External_Scenario10, self).setUpClass()
 
         self.ib = ibbase.InfobloxNIOStest(
             self.isolated_creds.get_credentials('primary'))
@@ -1132,7 +1132,7 @@ class Floating_External_Scenario10(base.BaseNetworkTest):
         # delete user
         self.isolated_creds.clear_isolated_creds()
         # delete project
-        super(Floating_External_Scenario8, self).tearDownClass()
+        super(Floating_External_Scenario10, self).tearDownClass()
         # revert neutron config
         if(self._arecord):
             ibbase.a_record_setup()
