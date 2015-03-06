@@ -24,7 +24,7 @@ Neutron_user_id = ibbase.get_neutron_user_id()
 Segment_range = ibbase.segmentation_range()
 
 
-class Condition_subnet_range(base.BaseNetworkTest):
+class Condition_subnet_range_InfobloxScenario12(base.BaseNetworkTest):
 
     _baseconfig = [
         {
@@ -58,16 +58,17 @@ class Condition_subnet_range(base.BaseNetworkTest):
 
         if(self._arecord):
             ibbase.a_record_setup(self._arecord)
-        
+
         ibbase.set_configopt(self._baseconfig)
         ibbase.service_restart()
         time.sleep(30)
 
-        super(Condition_subnet_range, self).setUpClass()
+        super(Condition_subnet_range_InfobloxScenario12, self).setUpClass()
 
         self.ib = ibbase.InfobloxNIOStest(
             self.isolated_creds.get_credentials('primary'))
 
+        self.network_type = ibbase.parser.get("ml2", "tenant_network_types")
         # create network
         network_name = data_utils.rand_name('test-network')
         resp, body = self.client.create_network(name=network_name)
@@ -98,7 +99,6 @@ class Condition_subnet_range(base.BaseNetworkTest):
                ip_version=4
            )
            self.subnet = body['subnet']
-        
 # create server
         server_name = data_utils.rand_name('test-server')
         flavor = CONF.compute.flavor_ref
@@ -113,7 +113,8 @@ class Condition_subnet_range(base.BaseNetworkTest):
             self.instance,
             self.network,
             self.subnet)
-    
+        self.internal_dhcp_ip = self.client.list_ports(device_owner="network:dhcp", network_id=self.network['id'])[1]['ports'][0]['fixed_ips'][0]['ip_address']
+
     @test.attr(type='smoke')
     def test_condition_with_snet_range(self):
         if self._snet_range_creation:
@@ -183,6 +184,31 @@ class Condition_subnet_range(base.BaseNetworkTest):
                 self.instance.id)
 
     @test.attr(type='smoke')
+    def test_EA_VM_NAME(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['VM Name']['value'],
+                self.instance.name)
+        else:
+            self.fail(
+                "EA for instance ID %s does not match with NIOS" %
+                self.instance.name)
+
+    @test.attr(type='smoke')
+    def test_EA_IP_Type(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['IP Type']['value'],
+                "Fixed")
+        else:
+            self.fail(
+                "EA IP Type for %s does not match " % self.instance.id)
+
+    @test.attr(type='smoke')
     def test_EA_Tenant_ID(self):
         args = "name=%s&_return_fields=extattrs" % (self.host_name)
         code, msg = self.ib.wapi_get_request("record:host", args)
@@ -224,6 +250,21 @@ class Condition_subnet_range(base.BaseNetworkTest):
                     device_owner="compute:None")[1]['ports'][0]['id'])
 
     @test.attr(type='smoke')
+    def test_EA_Port_Attached_Device_ID_for_instance(self):
+        args = "name=%s&_return_fields=extattrs" % (self.host_name)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Port Attached Device - Device ID']['value'],
+                self.client.list_ports(
+                    ubnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+        else:
+            self.fail(
+                "EA for Port Attached Device - Device ID % does not match with NIOS" %
+                self.client.list_ports(
+                    ubnet_id=self.subnet['id'], device_owner="compute:None")[1]['ports'][0]['device_id'])
+
+    @test.attr(type='smoke')
     def test_EA_CMP_Type(self):
         args = "name=%s&_return_fields=extattrs" % (self.host_name)
         code, msg = self.ib.wapi_get_request("record:host", args)
@@ -234,7 +275,21 @@ class Condition_subnet_range(base.BaseNetworkTest):
         else:
             self.fail("EA for cmp_type is not openstack")
 
-    #Test for Sub_Network
+
+
+#Test for Sub_Network
+    @test.attr(type='smoke')
+    def test_Network_ECMP_type(self):
+        args = "network=%s&network_view=%s&_return_fields=extattrs" % (
+            self.subnet['cidr'], self._baseconfig[0]['network_view'])
+        code, msg = self.ib.wapi_get_request("network", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Network Encap']['value'],
+                self.network_type.upper())
+        else:
+            self.fail("EA for Network Encap doesnot match")
+
     @test.attr(type='smoke')
     def test_EA_Is_Shared(self):
         args = "network=%s&network_view=%s&_return_fields=extattrs" % (
@@ -270,7 +325,7 @@ class Condition_subnet_range(base.BaseNetworkTest):
         self.assertTrue(int(loads(msg)[0]['extattrs']['Segmentation ID'][
                         'value']) in Segment_range,
                         "EA segmentation_id not updated")
-						
+
     @test.attr(type='smoke')
     def test_EA_Network_Network_Name(self):
         args = "network=%s&network_view=%s&_return_fields=extattrs" % (
@@ -355,6 +410,82 @@ class Condition_subnet_range(base.BaseNetworkTest):
                 "EA for Network user ID %s does not match with NIOS " %
                 self.isolated_creds.get_credentials('primary').user_id)
 
+#Test Private Network DHCP Port EA's
+    @test.attr(type='smoke')
+    def test_EA_Private_Network_dhcp_Tenant_ID(self):
+        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(self.network, self.subnet)
+        dhcp_port = "dhcp-port-" + \
+            self.internal_dhcp_ip.replace(".", "-") + "." + fqdn
+        args = "name=%s&_return_fields=extattrs" % (dhcp_port)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Tenant ID']['value'],
+                self.subnet['tenant_id'])
+        else:
+            self.fail("EA for cmp_type is not openstack")
+
+    @test.attr(type='smoke')
+    def test_EA_Private_Network_dhcp_VM_ID(self):
+        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(self.network, self.subnet)
+        dhcp_port = "dhcp-port-" + \
+            self.internal_dhcp_ip.replace(".", "-") + "." + fqdn
+        args = "name=%s&_return_fields=extattrs" % (dhcp_port)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['VM ID']['value'], "None")
+        else:
+            self.fail("EA for VM ID is mismatch on NIOS")
+
+    @test.attr(type='smoke')
+    def test_EA_Private_Network_dhcp_Device_ID(self):
+        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(self.network, self.subnet)
+        dhcp_port = "dhcp-port-" + \
+            self.internal_dhcp_ip.replace(".", "-") + "." + fqdn
+        args = "name=%s&_return_fields=extattrs" % (dhcp_port)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Port Attached Device - Device ID']['value'],
+                self.client.list_ports(device_owner="network:dhcp", network_id=self.network['id'])[1]['ports'][0]['device_id'])
+        else:
+            self.fail(
+                "EA for Port Attached Device - Device ID % does not match with NIOS" %
+                self.client.list_ports(
+                    subnet_id=self.network['id'], device_owner="network:dhcp")[1]['ports'][0]['device_id'])
+
+    @test.attr(type='smoke')
+    def test_EA_Private_Network_dhcp_Port_ID(self):
+        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(self.network, self.subnet)
+        dhcp_port = "dhcp-port-" + \
+            self.internal_dhcp_ip.replace(".", "-") + "." + fqdn
+        args = "name=%s&_return_fields=extattrs" % (dhcp_port)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['Port ID']['value'],
+                self.client.list_ports(device_owner="network:dhcp", network_id=self.network['id'])[1]['ports'][0]['id'])
+        else:
+            self.fail(
+                "EA for Port ID % does not match with NIOS" %
+                self.client.list_ports(
+                    subnet_id=self.network['id'], device_owner="network:dhcp")[1]['ports'][0]['id'])
+
+    @test.attr(type='smoke')
+    def test_EA_Private_Network_dhcp_IP_Type(self):
+        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(self.network, self.subnet)
+        dhcp_port = "dhcp-port-" + \
+            self.internal_dhcp_ip.replace(".", "-") + "." + fqdn
+        args = "name=%s&_return_fields=extattrs" % (dhcp_port)
+        code, msg = self.ib.wapi_get_request("record:host", args)
+        if code == 200 and len(loads(msg)) > 0:
+            self.assertEqual(
+                loads(msg)[0]['extattrs']['IP Type']['value'], "Fixed")
+        else:
+            self.fail("EA IP Type for %s does not match " % dhcp_port)
+
+
     @classmethod
     def tearDownClass(self):
 
@@ -367,7 +498,7 @@ class Condition_subnet_range(base.BaseNetworkTest):
 # delete user
         self.isolated_creds.clear_isolated_creds()
 
-        super(Condition_subnet_range, self).tearDownClass()
+        super(Condition_subnet_range_InfobloxScenario12, self).tearDownClass()
 # revert neutron config
         if(self._arecord):
             ibbase.a_record_setup()
