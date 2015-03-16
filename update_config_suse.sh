@@ -48,10 +48,10 @@ cp -a $Tempest_Master/scenarios $Tempest_dir/tempest/thirdparty/infoblox/
 mv $Tempest_dir/tempest/thirdparty/infoblox/scenarios/base_suse.py $Tempest_dir/tempest/thirdparty/infoblox/scenarios/base.py
 
 ## Installing Dependencies to run tempest
-easy_install testscenarios
+zypper --non-interactive install python-testtools
+zypper --non-interactive install python-unittest2
+zypper --non-interactive install python-fixtures
+zypper --non-interactive install python-testscenarios
 easy_install discover
-easy_install unittest2
 easy_install testresources
-easy_install testtools
-easy_install fixtures
 easy_install nose
