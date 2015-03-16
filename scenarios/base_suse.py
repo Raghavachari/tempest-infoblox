@@ -52,6 +52,32 @@ def segmentation_range():
         array = rangearr.split(':')
         return range(int(array[1]), int(array[2]))
 
+def get_admin_user_id():
+    cmd = "keystone --os-username " + CONF.identity.admin_username + " --os-password " + CONF.identity.admin_password + \
+        " --os-tenant-name " + CONF.identity.admin_tenant_name + " --os-auth-url " + CONF.identity.uri \
+        + " user-list"
+    args = shlex.split(cmd.encode('utf-8'))
+    p1 = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    cmd = "grep admin"
+    args = shlex.split(cmd.encode('utf-8'))
+    p2 = subprocess.Popen(
+        args,
+        stdin=p1.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    cmd = "awk '{print $2}'"
+    args = shlex.split(cmd.encode('utf-8'))
+    p3 = subprocess.Popen(
+        args,
+        stdin=p2.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    output, error = p3.communicate()
+    logger.info("admin user %s", output)
+    return output.strip()
 
 def get_neutron_user_id():
     cmd = "keystone --os-username " + CONF.identity.admin_username + " --os-password " + CONF.identity.admin_password + \
