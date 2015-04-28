@@ -737,22 +737,6 @@ class Floating_External_Scenario8(base.BaseNetworkTest):
                  self.client.list_ports(
                     subnet_id=self.ext_subnet['id'], device_owner="network:router_gateway")[1]['ports'][0]['device_id'])
 
-    @test.attr(type='smoke')
-    def test_EA_External_router_gateway_VM_ID(self):
-        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
-            self.Ext_network,
-            self.ext_subnet,
-            external=True)
-        external_port = "router-gw-" + \
-            self.router_gateway.replace(".", "-") + "." + fqdn
-        args = "name=%s&_return_fields=extattrs" % (external_port)
-        code, msg = self.ib.wapi_get_request("record:host", args)
-        if code == 200 and len(loads(msg)) > 0:
-            self.assertEqual(
-                loads(msg)[0]['extattrs']['VM ID']['value'], "None")
-        else:
-            self.fail("VM ID EA is mismatch for %s port in NIOS" % external_port)
-
 # Test External network DHCP port EA's
 
     @test.attr(type='smoke')
@@ -790,22 +774,6 @@ class Floating_External_Scenario8(base.BaseNetworkTest):
                     device_owner="network:dhcp", network_id=self.Ext_network['id'])[1]['ports'][0]['device_id'])
         else:
             self.fail("Device ID for %s is not added in NIOS" % external_port)
-
-    @test.attr(type='smoke')
-    def test_EA_External_dhcp_VM_ID(self):
-        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(
-            self.Ext_network,
-            self.ext_subnet,
-            external=True)
-        external_port = "dhcp-port-" + \
-            self.external_dhcp_ip.replace(".", "-") + "." + fqdn
-        args = "name=%s&_return_fields=extattrs" % (external_port)
-        code, msg = self.ib.wapi_get_request("record:host", args)
-        if code == 200 and len(loads(msg)) > 0:
-            self.assertEqual(
-                loads(msg)[0]['extattrs']['VM ID']['value'], "None")
-        else:
-            self.fail("VM ID EA is mismatch for %s port in NIOS" % external_port)
 
     @test.attr(type='smoke')
     def test_EA_External_dhcp_IP_Type(self):
@@ -986,19 +954,6 @@ class Floating_External_Scenario8(base.BaseNetworkTest):
                 self.subnet['tenant_id'])
         else:
             self.fail("EA for cmp_type is not openstack")
-
-    @test.attr(type='smoke')
-    def test_EA_Private_Network_dhcp_VM_ID(self):
-        fqdn = self.ib.get_fqdn_from_domain_suffix_pattern(self.network, self.subnet)
-        dhcp_port = "dhcp-port-" + \
-            self.internal_dhcp_ip.replace(".", "-") + "." + fqdn
-        args = "name=%s&_return_fields=extattrs" % (dhcp_port)
-        code, msg = self.ib.wapi_get_request("record:host", args)
-        if code == 200 and len(loads(msg)) > 0:
-            self.assertEqual(
-                loads(msg)[0]['extattrs']['VM ID']['value'], "None")
-        else:
-            self.fail("EA for VM ID is mismatch on NIOS")
 
     @test.attr(type='smoke')
     def test_EA_Private_Network_dhcp_Device_ID(self):
