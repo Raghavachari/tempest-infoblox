@@ -47,11 +47,11 @@ touch $Tempest_dir/tempest/thirdparty/infoblox/__init__.py
 cp -a $Tempest_Master/scenarios $Tempest_dir/tempest/thirdparty/infoblox/
 
 ## Installing Dependencies to run tempest
-pip install testrepository
-pip install testscenarios
-pip install discover
-pip install testresources
-pip install unittest2
-pip install testtools
-pip install fixtures
+#pip install testrepository
+#pip install testscenarios
+#pip install discover
+#pip install testresources
+#pip install unittest2
+#pip install testtools
+#pip install fixtures
 
